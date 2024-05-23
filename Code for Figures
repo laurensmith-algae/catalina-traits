@@ -1,0 +1,182 @@
+##For GitHub
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(devtools)
+library(factoextra)
+library(vegan)
+library("ggpubr")
+library(car)
+library(reshape2)
+library(FactoMineR)
+
+#main text Figure 2
+########full suite of traits PCA#################################
+Full_Suite <- read_excel("Desktop/Catalina_seaweedtraits.xlsx", 
+                         sheet = "Full_Suite", col_types = c("text", "numeric", "numeric", 
+                                                                 "numeric", "numeric", "numeric", 
+                                                                 "numeric", "numeric", "numeric", 
+                                                                 "numeric", "numeric", "numeric", 
+                                                                 "numeric", "numeric", "numeric",
+                                                                 "numeric","numeric"))
+
+cat.mat <- as.matrix(Full_Suite[,2:17])
+cat.pca <- prcomp(cat.mat, scale = TRUE)
+
+species_ordered <- factor(Full_Suite$Species,levels = c("Ulva", "Dictyota", "Colpomenia", "Laurencia", "Codium", "Silvetia", "Pelvetiopsis")) 
+
+Full_Color <- fviz_pca_biplot(cat.pca, label =" ", col.var="black", arrowsize=1, pointsize = 3, legend.title=("Species"), habillage = species_ordered,
+                              addEllipses = FALSE)+ #remove: label = " " to see vector labels.
+  labs(title = "", y = "PC2 (12.5%)", x = "PC1 (51%)")+
+  scale_color_manual(values=c("#0072B2", "#56B4E9", "#CC79A7", "#D55E00","#009E73", "#E69F00", "#F0E442"))+
+  scale_shape_manual(values=c(16, 16, 16, 16, 16, 16, 16))+
+  coord_equal(ratio = 1)+
+  theme(plot.background = element_blank(),
+        legend.text = element_text(face = "italic"),
+        text=element_text(size=25),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+Full_Color
+
+########contributions Full Suite#################################
+Cat.cont_colors_PC1 <- fviz_contrib(cat.pca, choice = "var", axes = 1, fill = "grey", color = "black")+
+  labs(title = "Trait contributions to PC1")+
+  theme(plot.background = element_blank(),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+Cat.cont_colorsPC2 <- fviz_contrib(cat.pca, choice = "var", axes = 2, fill = "grey", color="black")+ #new R fill = name +
+  labs(title = "Trait contributions to PC2")+
+  theme(plot.background = element_blank(),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+#main text figure 3
+########core suite of traits#################################
+Reduced_Suite <- read_excel("Desktop/Catalina_seaweedtraits.xlsx", 
+                            sheet = "Reduced_Suite", col_types = c("text", 
+                                                                   "numeric", "numeric", "numeric", 
+                                                                   "numeric", "numeric", "numeric", 
+                                                                   "numeric"))
+
+func.mat <- as.matrix(Reduced_Suite[,2:7])
+func.pca <- prcomp(func.mat,  scale = TRUE)
+
+species_ordered2 <- factor(Reduced_Suite$Species,levels = c("Ulva", "Dictyota", "Colpomenia", "Laurencia", "Codium", "Silvetia", "Pelvetiopsis")) 
+
+Reduced_Color <- fviz_pca_biplot(func.pca, label =" ", col.var="black", arrowsize=1, pointsize = 3, legend.title=("Species"), habillage = species_ordered2,
+                              addEllipses = FALSE)+
+  labs(title = "", y = "PC2 (12.5%)", x = "PC1 (51%)")+
+  scale_color_manual(values=c("#0072B2", "#56B4E9", "#CC79A7", "#D55E00","#009E73", "#E69F00", "#F0E442"))+
+  scale_shape_manual(values=c(16, 16, 16, 16, 16, 16, 16))+
+  coord_equal(ratio = 1)+
+  theme(plot.background = element_blank(),
+        legend.text = element_text(face = "italic"),
+        text=element_text(size=25),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+Reduced_Color
+
+########contributions Reduced Suite#################################
+func.cont_colors_PC1 <- fviz_contrib(func.pca, choice = "var", axes = 1, fill = "grey", color = "black")+
+  labs(title = "Trait contributions to PC1")+
+  theme(plot.background = element_blank(),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+func.cont_colorsPC2 <- fviz_contrib(func.pca, choice = "var", axes = 2, fill = "grey", color="black")+ #new R fill = name +
+  labs(title = "Trait contributions to PC2")+
+  theme(plot.background = element_blank(),
+        legend.position = "none",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+########Supplement Figure - S1 correlation matrix full suite#################################
+alldata_cor <- round(cor(cat.mat),2)
+reorder_cormat <- function(alldata_cor){
+  #use correlation between variables as distance
+  dd<-as.dist((1-alldata_cor)/2)
+  hc<-hclust(dd)
+  alldata_cor <- alldata_cor[hc$order,hc$order]
+}
+
+alldata_cor<- reorder_cormat(alldata_cor)
+alldata_cor
+upper_tri <-up_triangle_cor(alldata_cor)
+melted_cor.mat <- melt(upper_tri, na.rm = TRUE)
+ggheatmap_empty <- ggplot(melted_cor.mat, aes(Var2, Var1, fill = value))+
+  geom_tile(color="white")+
+  scale_fill_gradient2(low="red", high="#56B4E9", mid= "white", ##low="#1d457f", high="#f9ad2a", mid= "#cc5c76"
+                       midpoint=0, limit=c(-1,1), space="Lab",
+                       name="Pearsons")+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle=90,vjust=0.5,
+                                   size=20, hjust=1),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(color = "#F4FAFC"),
+        axis.title.y = element_text(color = "#F4FAFC"),
+        plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())+
+  scale_y_discrete(position = "right")+
+  coord_fixed()
+ggheatmap_empty
+
+########Supplement Figure - S2 correlation matrix reduced suite#################################
+Reddata_cor <- round(cor(func.mat),2)
+reorder_cormat <- function(Reddata_cor){
+  dd<-as.dist((1-Reddata_cor)/2)
+  hc<-hclust(dd)
+  Reddata_cor <- Reddata_cor[hc$order,hc$order]
+}
+
+Reddata_cor<- reorder_cormat(Reddata_cor)
+Reddata_cor
+upper_tri_red <-up_triangle_cor(Reddata_cor)
+melted_cor.mat_red <- melt(upper_tri_red, na.rm = TRUE)
+ggheatmap_empty_red <- ggplot(melted_cor.mat_red, aes(Var2, Var1, fill = value))+
+  geom_tile(color="white")+
+  scale_fill_gradient2(low="red", high="#56B4E9", mid= "white", ##low="#1d457f", high="#f9ad2a", mid= "#cc5c76"
+                       midpoint=0, limit=c(-1,1), space="Lab",
+                       name="Pearsons")+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle=90,vjust=0.5,
+                                   size=20, hjust=1),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(color = "#F4FAFC"),
+        axis.title.y = element_text(color = "#F4FAFC"),
+        plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())+
+  scale_y_discrete(position = "right")+
+  coord_fixed()
+ggheatmap_empty_red
+
+########Supplement Figure - S3 PC3 vs PC4#################################
+PC3v4 <- fviz_pca_biplot(cat.pca, col.var="black", label = " ", legend.title = ("Species"),
+                         repel = TRUE, # Avoid text overlapping
+                         axes = c(3, 4), # choose PCs to plot
+                         habillage = species_ordered)+
+  labs (title = " ", y = "PC 4 (7.4%)", x = "PC 3 (10%)")+
+  scale_color_manual(values=c("#0072B2", "#56B4E9", "#CC79A7", "#D55E00","#009E73", "#E69F00", "#F0E442"))+
+  scale_shape_manual(values=c(16,16, 16, 16, 16, 16, 16))+
+  coord_equal(ratio = 1)+
+  theme(plot.background = element_blank(),
+        legend.text = element_text(face = "italic"),
+        text=element_text(size=25),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+########Supplement Figure - S3 scattergram#################################
+library("GGally")
+library("psych")
+
+scatter <- pairs(Full_Suite[, c(2:17)], main = " ")
+
+scatter_matrix <- ggpairs(Full_Suite, columns = c(2:17))+
+  theme(plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+scatter_matrix
