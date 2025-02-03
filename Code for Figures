@@ -67,7 +67,7 @@ species_ordered2 <- factor(Reduced_Suite$Species,levels = c("Ulva", "Dictyota", 
 
 Reduced_Color <- fviz_pca_biplot(func.pca, label =" ", col.var="black", arrowsize=1, pointsize = 3, legend.title=("Species"), habillage = species_ordered2,
                               addEllipses = FALSE)+
-  labs(title = "", y = "PC2 (12.5%)", x = "PC1 (51%)")+
+  labs(title = "", y = "PC2 (21.9%)", x = "PC1 (46.7%)")+
   scale_color_manual(values=c("#0072B2", "#56B4E9", "#CC79A7", "#D55E00","#009E73", "#E69F00", "#F0E442"))+
   scale_shape_manual(values=c(16, 16, 16, 16, 16, 16, 16))+
   coord_equal(ratio = 1)+
